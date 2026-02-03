@@ -1,16 +1,25 @@
 /**
  * 后端 API 服务
- * 与 Python 后端通信，处理备份、恢复等操作
+ * 支持两种模式：
+ * 1. 独立 Python 后端 (http://localhost:5000)
+ * 2. SillyTavern 服务端插件 (/api/plugins/st-manager)
  */
 
 import type { BackupOptions, BackupResult, BackupInfo, BackupSchedule } from '../types';
 
-// 默认后端地址
+// 默认后端地址（独立 Python 后端）
 const DEFAULT_BACKEND_URL = 'http://localhost:5000';
+
+// 服务端插件 API 路径
+const SERVER_PLUGIN_PATH = '/api/plugins/st-manager';
+
+// API 版本前缀
+const API_V2_PREFIX = '/api/v2';
 
 class BackendService {
   private baseUrl: string;
   private connected: boolean = false;
+  private useServerPlugin: boolean = false;
 
   constructor(baseUrl: string = DEFAULT_BACKEND_URL) {
     this.baseUrl = baseUrl;
@@ -22,6 +31,28 @@ class BackendService {
   setBaseUrl(url: string) {
     this.baseUrl = url;
     this.connected = false;
+    // 检测是否为服务端插件模式
+    this.useServerPlugin = url === SERVER_PLUGIN_PATH || url.endsWith(SERVER_PLUGIN_PATH);
+  }
+
+  /**
+   * 启用服务端插件模式
+   */
+  useServerPluginMode() {
+    this.baseUrl = SERVER_PLUGIN_PATH;
+    this.useServerPlugin = true;
+    this.connected = false;
+  }
+
+  /**
+   * 获取 API 端点（自动添加版本前缀）
+   */
+  private getEndpoint(path: string): string {
+    // 服务端插件不需要 /api/v2 前缀
+    if (this.useServerPlugin) {
+      return path.replace(API_V2_PREFIX, '');
+    }
+    return path;
   }
 
   /**
@@ -40,7 +71,7 @@ class BackendService {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
+    const url = `${this.baseUrl}${this.getEndpoint(endpoint)}`;
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -59,11 +90,33 @@ class BackendService {
 
   /**
    * 检查后端连接
+   * 自动尝试服务端插件和独立后端
    */
   async checkConnection(): Promise<boolean> {
+    // 先尝试服务端插件
+    try {
+      const pluginResult = await fetch(`${SERVER_PLUGIN_PATH}/health`);
+      if (pluginResult.ok) {
+        const data = await pluginResult.json();
+        if (data.status === 'ok') {
+          this.useServerPlugin = true;
+          this.baseUrl = SERVER_PLUGIN_PATH;
+          this.connected = true;
+          console.log('[ST Manager] 已连接到服务端插件');
+          return true;
+        }
+      }
+    } catch (e) {
+      // 服务端插件不可用，尝试独立后端
+    }
+
+    // 尝试独立后端
     try {
       const result = await this.request<{ status: string; version: string }>('/api/v2/health');
       this.connected = result.status === 'ok';
+      if (this.connected) {
+        console.log('[ST Manager] 已连接到独立后端');
+      }
       return this.connected;
     } catch (e) {
       this.connected = false;

@@ -2,115 +2,112 @@
 
 SillyTavern 资源可视化管理插件 - 支持角色卡、世界书、预设、正则等资源的管理与备份。
 
-## 📦 功能特性
+> 📖 **完整安装和使用指南请查看**: [INSTALLATION.md](INSTALLATION.md)
+
+## ✨ 功能特性
 
 - 🎴 **资源管理** - 直接在酒馆内编辑角色卡、世界书、预设、正则脚本
-- 💾 **备份功能** - 支持手动/定期备份到任意目录（不限于酒馆内部）
-- 🔄 **实时同步** - 通过酒馆 API 实时修改资源
+- 💾 **智能备份** - 支持完整/增量备份，可配置定时任务（每日/每周）
+- 🔄 **实时同步** - 通过酒馆 API 实时修改资源，无需重启
 - 📊 **统计概览** - 查看资源数量和备份状态
+- 🌐 **Web UI** - 从酒馆扩展菜单（魔法棒）直接打开完整管理界面
+- ⚙️ **前端配置** - 在插件内配置后端地址，无需手动编辑文件
 
-## 🚀 安装方式
+## 🚀 快速开始
 
-### 方式 1：手动编译安装
+### 安装插件
 
 ```bash
-# 1. 进入插件目录
-cd st-manager-plugin
+# 克隆到酒馆扩展目录
+cd /path/to/SillyTavern/public/scripts/extensions/third-party
+git clone https://github.com/Youzini-afk/st-manager-plugin.git st-manager
 
-# 2. 安装依赖
+# 构建插件
+cd st-manager
 npm install
-
-# 3. 编译
 npm run build
-
-# 4. 复制到酒馆扩展目录
-# Windows:
-xcopy /E /I dist "E:\SillyTavern\public\scripts\extensions\third-party\st-manager"
-# Linux/Mac:
-cp -r dist/* /path/to/SillyTavern/public/scripts/extensions/third-party/st-manager/
-
-# 5. 复制 manifest.json
-copy manifest.json "E:\SillyTavern\public\scripts\extensions\third-party\st-manager\"
 ```
 
-### 方式 2：使用预编译版本
-
-从 [Releases](https://github.com/Dadihu123/ST-Manager/releases) 下载最新版本，解压到酒馆扩展目录。
-
-## 🔧 配置说明
-
-### 后端服务
-
-插件需要配合 Python 后端服务使用。后端提供备份、恢复等文件系统操作。
+### 启动后端服务
 
 ```bash
-# 启动后端服务（默认端口 5000，建议改为 5001）
+cd /path/to/ST-Manager
+pip install -r requirements.txt
 python app.py
 ```
 
-### config.json 配置项
+后端默认运行在 `http://localhost:5000`
+
+### 在酒馆中使用
+
+1. **方式 A**: 点击酒馆右上角 **魔法棒图标** → 选择 **"ST Manager 资源管理"**
+2. **方式 B**: 进入 **设置** → **扩展设置** → 展开 **"ST Manager 资源管理"** 面板
+
+首次使用请在 **设置** 标签页配置后端地址并点击 **"保存并重连"**。
+
+## 📚 详细文档
+
+## 📚 详细文档
+
+- 📖 [完整安装和使用指南](INSTALLATION.md)
+- 🔧 [配置说明](#配置说明)
+- 🔌 [API 使用](#api-使用)
+- 🛠️ [开发指南](#开发)
+
+## 🔧 配置说明
+
+### 后端配置 (config.json)
 
 ```json
 {
-  "st_data_path": "E:/SillyTavern/data",  // 酒馆数据目录
+  "st_data_path": "/path/to/SillyTavern/data",
   "backup": {
-    "enabled": true,           // 启用定期备份
-    "path": "E:/Backups/ST",   // 备份目录（可以是任意路径）
-    "schedule": "daily",       // daily | weekly | disabled
-    "hour": 3,                 // 执行时间（小时）
-    "retention_days": 30       // 保留天数
+    "enabled": true,
+    "path": "data/backups",      // 支持外部目录
+    "schedule": "daily",         // daily | weekly | disabled
+    "retention_days": 30
   },
   "cors": {
     "enabled": true,
-    "origins": ["http://localhost:8000"]  // 酒馆地址
+    "origins": ["http://localhost:8000"]
   }
 }
 ```
 
-## 📁 项目结构
+### 前端配置（插件内）
 
-```
-st-manager-plugin/
-├── package.json          # NPM 配置
-├── manifest.json         # 酒馆插件元数据
-├── tsconfig.json         # TypeScript 配置
-├── vite.config.ts        # Vite 构建配置
-└── src/
-    ├── index.ts          # 插件入口
-    ├── App.vue           # 主界面
-    ├── types.ts          # 类型定义
-    ├── components/       # Vue 组件
-    │   ├── OverviewPanel.vue   # 概览面板
-    │   ├── ResourcePanel.vue   # 资源管理
-    │   ├── BackupPanel.vue     # 备份管理
-    │   └── SettingsPanel.vue   # 设置面板
-    └── services/         # 服务层
-        ├── backendApi.ts # 后端 API 调用
-        └── stApi.ts      # 酒馆 API 封装
-```
+在插件 **设置** 标签页可配置：
+- 后端地址（默认 `http://localhost:5000`）
+- 自动连接选项
+- 通知偏好设置
 
-## 🔌 API 说明
+配置自动保存到浏览器本地存储。
 
-### 前端 API (window.STManagerPlugin)
+## 🔌 API 使用
+
+### 全局 JavaScript API
 
 ```javascript
-// 连接后端
-await window.STManagerPlugin.connect();
+// 检查插件状态
+if (window.STManagerPlugin) {
+  // 连接后端
+  await window.STManagerPlugin.connect();
 
-// 触发备份
-const result = await window.STManagerPlugin.backup.trigger({
-  resources: ['characters', 'worldbooks'],
-  incremental: true
-});
+  // 触发备份
+  await window.STManagerPlugin.backup.trigger({
+    type: 'full',
+    resources: ['characters', 'worldbooks']
+  });
 
-// 获取备份列表
-const backups = await window.STManagerPlugin.backup.list();
+  // 获取备份列表
+  const backups = await window.STManagerPlugin.backup.list();
 
-// 恢复备份
-await window.STManagerPlugin.backup.restore('20240101_120000');
+  // 恢复备份
+  await window.STManagerPlugin.backup.restore('backup_20240101_120000');
+}
 ```
 
-### 后端 API (/api/v2/)
+### 后端 REST API
 
 | 接口 | 方法 | 说明 |
 |------|------|------|
@@ -118,38 +115,58 @@ await window.STManagerPlugin.backup.restore('20240101_120000');
 | `/api/v2/backup/trigger` | POST | 触发备份 |
 | `/api/v2/backup/list` | GET | 备份列表 |
 | `/api/v2/backup/restore` | POST | 恢复备份 |
-| `/api/v2/backup/delete` | DELETE | 删除备份 |
 | `/api/v2/backup/schedule` | GET/POST | 备份计划 |
 | `/api/v2/config` | GET/POST | 配置管理 |
-| `/api/v2/track-change` | POST | 变更追踪 |
 
 ## 🛠️ 开发
 
 ```bash
-# 开发模式（热更新）
+# 安装依赖
+npm install
+
+# 开发模式（热重载）
 npm run dev
 
 # 类型检查
-npm run typecheck
+npm run type-check
 
 # 生产构建
 npm run build
 ```
 
-## 📋 依赖说明
+## � 项目结构
 
-### 前端依赖
-- Vue 3
-- TypeScript
-- Vite
-
-### 后端依赖（可选）
-- APScheduler（定时备份功能）
-
-```bash
-pip install apscheduler
+```
+st-manager-plugin/
+├── manifest.json         # 酒馆插件元数据
+├── package.json          # NPM 配置
+├── tsconfig.json         # TypeScript 配置
+├── vite.config.ts        # Vite 构建配置
+├── INSTALLATION.md       # 详细安装指南
+├── dist/                 # 构建输出
+│   ├── index.iife.js     # 插件主文件
+│   └── style.css         # 样式文件
+└── src/
+    ├── index.ts          # 插件入口
+    ├── App.vue           # 主界面
+    ├── types.ts          # TypeScript 类型定义
+    ├── components/       # Vue 组件
+    │   ├── OverviewPanel.vue   # 概览面板
+    │   ├── ResourcePanel.vue   # 资源管理
+    │   ├── BackupPanel.vue     # 备份管理
+    │   └── SettingsPanel.vue   # 设置面板
+    └── services/         # 服务层
+        ├── backendApi.ts # 后端 API 封装
+        └── stApi.ts      # SillyTavern API 封装
 ```
 
-## 📄 License
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+- GitHub: https://github.com/Youzini-afk/st-manager-plugin
+- 讨论: [Issues](https://github.com/Youzini-afk/st-manager-plugin/issues)
+
+## 📄 开源协议
 
 MIT License

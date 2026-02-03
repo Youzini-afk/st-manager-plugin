@@ -173,7 +173,7 @@ const scheduleHour = ref(3);
 const retentionDays = ref(30);
 
 // 手动备份
-const selectedResources = ref(['characters', 'worldbooks', 'presets']);
+const selectedResources = ref(['characters', 'worldbooks', 'presets', 'regexes', 'scripts', 'quickreplies']);
 const incremental = ref(true);
 const backingUp = ref(false);
 

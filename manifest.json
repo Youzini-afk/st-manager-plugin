@@ -1,0 +1,12 @@
+{
+  "display_name": "ST Manager",
+  "loading_order": 100,
+  "requires": [],
+  "optional": [],
+  "js": "dist/index.js",
+  "css": "dist/style.css",
+  "author": "ST-Manager Team",
+  "version": "1.0.0",
+  "homePage": "https://github.com/Youzini-afk/st-manager-plugin",
+  "description": "SillyTavern 资源可视化管理插件 - 支持角色卡、世界书、预设、正则、ST脚本、快速回复的管理与备份"
+}

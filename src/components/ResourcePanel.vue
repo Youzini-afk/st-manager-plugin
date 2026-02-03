@@ -161,21 +161,21 @@ async function refreshList() {
         break;
       case 'worldbook':
         const wbResult = await backendService.listWorldbooks();
-        const wbs = wbResult.files || [];
+        const wbs = wbResult.items || [];
         items.value = wbs.map((wb: any) => ({
           id: wb.name || wb.filename,
           name: wb.name || wb.filename?.replace('.json', ''),
-          meta: wb.entries_count ? `${wb.entries_count} 条目` : '',
+          meta: wb.entry_count ? `${wb.entry_count} 条目` : '',
           ...wb,
         }));
         break;
       case 'preset':
         const presetResult = await backendService.listPresets();
-        const presets = presetResult.presets || [];
+        const presets = presetResult.items || [];
         items.value = presets.map((p: any) => ({
           id: p.name || p.filename,
           name: p.name || p.filename?.replace('.json', ''),
-          meta: '',
+          meta: p.description || '',
           ...p,
         }));
         break;

@@ -19,14 +19,15 @@ let vueApp: VueApp | null = null;
  * 初始化插件
  */
 async function initPlugin() {
-  const ctx = window.SillyTavern?.getContext?.();
-  if (!ctx) {
-    console.warn('[ST Manager] SillyTavern context not found, retrying in 1s...');
-    setTimeout(initPlugin, 1000);
-    return;
-  }
+  try {
+    const ctx = window.SillyTavern?.getContext?.();
+    if (!ctx) {
+      console.warn('[ST Manager] SillyTavern context not found, retrying in 1s...');
+      setTimeout(initPlugin, 1000);
+      return;
+    }
 
-  console.log(`[ST Manager] Plugin v${PLUGIN_VERSION} initializing...`);
+    console.log(`[ST Manager] Plugin v${PLUGIN_VERSION} initializing...`);
 
   const { eventSource, event_types } = ctx;
   let isRegistered = false;
@@ -147,6 +148,17 @@ async function initPlugin() {
 
   // 暴露全局 API
   exposeGlobalApi();
+  
+  console.log('[ST Manager] Plugin initialized successfully');
+  } catch (error) {
+    console.error('[ST Manager] Failed to initialize plugin:', error);
+    // 即使出错也暴露全局 API，方便调试
+    try {
+      exposeGlobalApi();
+    } catch (e) {
+      console.error('[ST Manager] Failed to expose global API:', e);
+    }
+  }
 }
 
 /**
@@ -296,11 +308,21 @@ function exposeGlobalApi() {
   console.log('[ST Manager] Global API exposed as window.STManagerPlugin');
 }
 
-// 启动插件
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initPlugin);
-} else {
-  initPlugin();
+// 启动插件（使用错误捕获包装）
+try {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      initPlugin().catch(err => {
+        console.error('[ST Manager] Initialization error:', err);
+      });
+    });
+  } else {
+    initPlugin().catch(err => {
+      console.error('[ST Manager] Initialization error:', err);
+    });
+  }
+} catch (error) {
+  console.error('[ST Manager] Fatal error during plugin load:', error);
 }
 
 // 导出供模块化使用

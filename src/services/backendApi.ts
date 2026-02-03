@@ -192,9 +192,8 @@ class BackendService {
   /**
    * 获取正则脚本列表
    */
-  async listRegexScripts(): Promise<any[]> {
-    // 正则脚本目前没有专门接口，返回空数组
-    return [];
+  async listRegexScripts(): Promise<any> {
+    return this.request('/api/v2/regex/list');
   }
 
   // ============ 资源同步 API ============

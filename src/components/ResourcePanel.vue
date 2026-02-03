@@ -180,10 +180,11 @@ async function refreshList() {
         }));
         break;
       case 'regex':
-        const regexes = await backendService.listRegexScripts();
+        const regexResult = await backendService.listRegexScripts();
+        const regexes = regexResult.items || [];
         items.value = regexes.map((r: any) => ({
           id: r.id || r.name,
-          name: r.scriptName || r.name,
+          name: r.name || r.filename?.replace('.json', ''),
           meta: r.enabled ? '启用' : '禁用',
           ...r,
         }));

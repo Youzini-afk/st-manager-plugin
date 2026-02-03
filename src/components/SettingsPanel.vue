@@ -12,12 +12,18 @@
             v-model="backendUrl"
             type="text"
             class="stm-input"
-            placeholder="http://localhost:5001"
+            placeholder="http://localhost:5000"
           />
+          <small class="stm-hint">ST-Manager Python 后端服务的地址（默认端口 5000）</small>
         </div>
-        <button class="stm-btn stm-btn-primary" @click="saveBackendUrl">
-          保存并重连
-        </button>
+        <div class="stm-btn-group">
+          <button class="stm-btn stm-btn-primary" @click="saveBackendUrl">
+            保存并重连
+          </button>
+          <button class="stm-btn" @click="openWebUI" :disabled="!isBackendConnected">
+            打开 Web UI
+          </button>
+        </div>
       </div>
     </div>
 
@@ -138,7 +144,8 @@ const emit = defineEmits<{
 }>();
 
 // 后端地址
-const backendUrl = ref('http://localhost:5001');
+const backendUrl = ref('http://localhost:5000');
+const isBackendConnected = ref(false);
 
 // 本地配置副本
 const localConfig = reactive({
@@ -180,13 +187,19 @@ watch(
 async function saveBackendUrl() {
   backendService.setBaseUrl(backendUrl.value);
   const connected = await backendService.checkConnection();
+  isBackendConnected.value = connected;
+  
   if (connected) {
     window.toastr?.success('后端连接成功');
-    // 保存到本地存储
     localStorage.setItem('stm_backend_url', backendUrl.value);
   } else {
     window.toastr?.error('后端连接失败');
   }
+}
+
+function openWebUI() {
+  window.open(backendUrl.value, '_blank');
+  window.toastr?.info('已在新标签页打开 Web UI');
 }
 
 /**
@@ -210,6 +223,10 @@ const savedUrl = localStorage.getItem('stm_backend_url');
 if (savedUrl) {
   backendUrl.value = savedUrl;
 }
+
+backendService.checkConnection().then((connected) => {
+  isBackendConnected.value = connected;
+});
 </script>
 
 <style scoped>
@@ -293,6 +310,11 @@ if (savedUrl) {
   width: 16px;
   height: 16px;
   accent-color: #667eea;
+}
+
+.stm-btn-group {
+  display: flex;
+  gap: 8px;
 }
 
 .stm-actions {

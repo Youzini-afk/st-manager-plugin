@@ -142,6 +142,9 @@ async function initPlugin() {
   // 初始化后端连接
   initBackendConnection();
 
+  // 注册扩展菜单项（魔法棒）
+  registerExtensionMenu();
+
   // 暴露全局 API
   exposeGlobalApi();
 }
@@ -162,12 +165,105 @@ async function initBackendConnection() {
 }
 
 /**
+ * 注册扩展菜单项（魔法棒）
+ */
+function registerExtensionMenu() {
+  try {
+    // 方法 1: 使用 SlashCommand（如果可用）
+    if (window.ST_API?.slashCommand?.register) {
+      window.ST_API.slashCommand.register({
+        name: 'stmanager',
+        description: '打开 ST Manager 资源管理面板',
+        callback: () => {
+          openWebUI();
+        },
+      });
+    }
+
+    // 方法 2: 直接添加到扩展菜单按钮
+    const addExtensionButton = () => {
+      // 查找扩展菜单容器
+      const extensionsMenu = document.querySelector('#extensionsMenu, .extensions_menu, [data-extension-menu]');
+      if (!extensionsMenu) {
+        console.warn('[ST Manager] Extensions menu not found');
+        return;
+      }
+
+      // 检查是否已添加
+      if (document.getElementById('stm-menu-button')) {
+        return;
+      }
+
+      // 创建菜单按钮
+      const button = document.createElement('div');
+      button.id = 'stm-menu-button';
+      button.className = 'list-group-item flex-container flexGap5';
+      button.style.cursor = 'pointer';
+      button.innerHTML = `
+        <div class="fa-solid fa-box-archive extensionsMenuExtensionButton"></div>
+        <span>ST Manager 资源管理</span>
+      `;
+
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        openWebUI();
+      });
+
+      extensionsMenu.appendChild(button);
+      console.log('[ST Manager] Extension menu button added');
+    };
+
+    // 延迟添加，确保 DOM 已加载
+    setTimeout(addExtensionButton, 1000);
+
+    // 监听 DOM 变化，以防菜单动态加载
+    const observer = new MutationObserver(() => {
+      if (!document.getElementById('stm-menu-button')) {
+        addExtensionButton();
+      }
+    });
+
+    const targetNode = document.body;
+    observer.observe(targetNode, { childList: true, subtree: true });
+
+  } catch (e) {
+    console.error('[ST Manager] Failed to register extension menu:', e);
+  }
+}
+
+/**
+ * 打开 Web UI（新标签页）
+ */
+function openWebUI() {
+  const backendUrl = localStorage.getItem('stm_backend_url') || 'http://localhost:5000';
+  
+  // 检查后端是否可用
+  backendService.checkConnection().then((connected) => {
+    if (!connected) {
+      if (window.toastr) {
+        window.toastr.warning(`无法连接到后端服务 (${backendUrl})，请先启动 Python 后端`, 'ST Manager');
+      } else {
+        alert(`无法连接到后端服务 (${backendUrl})，请先启动 Python 后端`);
+      }
+      return;
+    }
+
+    // 打开新标签页
+    window.open(backendUrl, '_blank');
+    
+    if (window.toastr) {
+      window.toastr.success('已在新标签页打开 ST Manager Web UI', 'ST Manager');
+    }
+  });
+}
+
+/**
  * 暴露全局 API
  */
 function exposeGlobalApi() {
   const pluginApi: STManagerPluginInstance = {
     version: PLUGIN_VERSION,
-    backendUrl: 'http://localhost:5001',
+    backendUrl: 'http://localhost:5000',
     isConnected: false,
 
     async connect() {

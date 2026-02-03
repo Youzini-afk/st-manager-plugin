@@ -13,7 +13,7 @@
           <span :class="['stm-status-indicator', { online: isConnected }]">
             {{ isConnected ? '● 在线' : '○ 离线' }}
           </span>
-          <span class="stm-status-url">localhost:5001</span>
+          <span class="stm-status-url">localhost:5000</span>
         </div>
       </div>
     </div>
@@ -77,6 +77,10 @@
 
     <!-- 快捷操作 -->
     <div class="stm-quick-actions">
+      <button class="stm-action-btn" @click="openWebUI" :disabled="!isConnected">
+        <span class="stm-action-icon">🖥️</span>
+        <span>打开 Web UI</span>
+      </button>
       <button class="stm-action-btn" :disabled="!isConnected">
         <span class="stm-action-icon">⚡</span>
         <span>立即备份</span>
@@ -84,10 +88,6 @@
       <button class="stm-action-btn" :disabled="!isConnected">
         <span class="stm-action-icon">🔄</span>
         <span>同步资源</span>
-      </button>
-      <button class="stm-action-btn">
-        <span class="stm-action-icon">📖</span>
-        <span>查看文档</span>
       </button>
     </div>
   </div>
@@ -110,6 +110,15 @@ defineEmits<{
   (e: 'refresh'): void;
   (e: 'connect'): void;
 }>();
+
+/**
+ * 打开 Web UI
+ */
+function openWebUI() {
+  const backendUrl = localStorage.getItem('stm_backend_url') || 'http://localhost:5000';
+  window.open(backendUrl, '_blank');
+  window.toastr?.info('已在新标签页打开 Web UI');
+}
 </script>
 
 <style scoped>

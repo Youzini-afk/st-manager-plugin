@@ -4,8 +4,8 @@ package-lock.json
 pnpm-lock.yaml
 yarn.lock
 
-# Build outputs
-dist/
+# Build outputs (uncomment to exclude from git)
+# dist/
 
 # IDE
 .vscode/

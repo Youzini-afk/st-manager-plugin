@@ -13,7 +13,7 @@
               v-model="backupPath"
               type="text"
               class="stm-input"
-              placeholder="E:\Backups\ST-Data"
+              placeholder="留空使用后端默认路径 (data/backups)"
             />
             <button class="stm-btn" @click="selectPath" :disabled="!isConnected">
               浏览...
@@ -163,8 +163,8 @@ const resourceTypes = [
   { id: 'quickreplies', label: '快速回复', icon: '💬' },
 ];
 
-// 备份路径
-const backupPath = ref('E:\\Backups\\ST-Data');
+// 备份路径（空则使用后端默认的 data/backups）
+const backupPath = ref('');
 
 // 定期备份设置
 const scheduleEnabled = ref(false);
@@ -239,19 +239,19 @@ async function triggerBackup() {
   try {
     const result = await backendService.triggerBackup({
       resources: selectedResources.value,
-      path: backupPath.value,
+      path: backupPath.value || undefined,  // 空则使用后端默认路径
       incremental: incremental.value,
     });
 
     if (result.success) {
-      window.toastr?.success(`备份完成：${result.fileCount} 个文件，${result.sizeMb.toFixed(1)} MB`);
+      window.toastr?.success(`备份完成：${result.fileCount} 个文件，${result.sizeMb?.toFixed(1) ?? 0} MB`);
       await loadBackups();
     } else {
-      window.toastr?.error('备份失败');
+      window.toastr?.error(result.error || '备份失败');
     }
-  } catch (e) {
+  } catch (e: any) {
     console.error('[ST Manager] 备份失败:', e);
-    window.toastr?.error('备份失败');
+    window.toastr?.error(e.message || '备份失败');
   } finally {
     backingUp.value = false;
   }

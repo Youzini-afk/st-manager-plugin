@@ -6,7 +6,7 @@
 import type { BackupOptions, BackupResult, BackupInfo, BackupSchedule } from '../types';
 
 // 默认后端地址
-const DEFAULT_BACKEND_URL = 'http://localhost:5001';
+const DEFAULT_BACKEND_URL = 'http://localhost:5000';
 
 class BackendService {
   private baseUrl: string;

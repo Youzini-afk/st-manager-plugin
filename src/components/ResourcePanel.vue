@@ -94,7 +94,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { characterApi, worldbookApi, presetApi, regexApi } from '../services/stApi';
+import { backendService } from '../services/backendApi';
 
 interface ResourceItem {
   id: string;
@@ -149,38 +149,41 @@ async function refreshList() {
   try {
     switch (activeType.value) {
       case 'character':
-        const chars = await characterApi.list();
-        items.value = chars.map((c) => ({
+        const cardsResult = await backendService.listCards();
+        const chars = cardsResult.cards || [];
+        items.value = chars.map((c: any) => ({
           id: c.id,
-          name: c.name,
-          avatar: c.avatar ? `/characters/${c.avatar}` : undefined,
-          meta: c.creator || '',
+          name: c.char_name || c.filename,
+          avatar: c.thumb_url,
+          meta: c.creator || `${c.token_count || 0} tokens`,
           ...c,
         }));
         break;
       case 'worldbook':
-        const wbs = await worldbookApi.list();
-        items.value = wbs.map((wb) => ({
-          id: wb.name,
-          name: wb.name,
-          meta: `${wb.entries_count} 条目`,
+        const wbResult = await backendService.listWorldbooks();
+        const wbs = wbResult.files || [];
+        items.value = wbs.map((wb: any) => ({
+          id: wb.name || wb.filename,
+          name: wb.name || wb.filename?.replace('.json', ''),
+          meta: wb.entries_count ? `${wb.entries_count} 条目` : '',
           ...wb,
         }));
         break;
       case 'preset':
-        const presets = await presetApi.list();
-        items.value = presets.map((p) => ({
-          id: p.name,
-          name: p.name,
-          meta: p.api,
+        const presetResult = await backendService.listPresets();
+        const presets = presetResult.presets || [];
+        items.value = presets.map((p: any) => ({
+          id: p.name || p.filename,
+          name: p.name || p.filename?.replace('.json', ''),
+          meta: '',
           ...p,
         }));
         break;
       case 'regex':
-        const regexes = await regexApi.list();
-        items.value = regexes.map((r) => ({
-          id: r.id,
-          name: r.scriptName,
+        const regexes = await backendService.listRegexScripts();
+        items.value = regexes.map((r: any) => ({
+          id: r.id || r.name,
+          name: r.scriptName || r.name,
           meta: r.enabled ? '启用' : '禁用',
           ...r,
         }));
@@ -203,33 +206,8 @@ function selectItem(item: ResourceItem) {
 }
 
 async function editItem(item: ResourceItem) {
-  // 获取完整数据
-  loading.value = true;
-  try {
-    let fullData: any = null;
-    switch (activeType.value) {
-      case 'character':
-        fullData = await characterApi.get(item.id);
-        break;
-      case 'worldbook':
-        fullData = await worldbookApi.get(item.id);
-        break;
-      case 'preset':
-        fullData = await presetApi.get(item.id, item.api);
-        break;
-      case 'regex':
-        fullData = await regexApi.get(item.id);
-        break;
-    }
-    if (fullData) {
-      editingItem.value = { ...item, ...fullData };
-    }
-  } catch (e) {
-    console.error('[ST Manager] 获取资源详情失败:', e);
-    window.toastr?.error('获取资源详情失败');
-  } finally {
-    loading.value = false;
-  }
+  // 暂时使用列表数据
+  editingItem.value = { ...item };
 }
 
 async function saveItem() {
@@ -237,33 +215,9 @@ async function saveItem() {
   
   loading.value = true;
   try {
-    let success = false;
-    const item = editingItem.value;
-    
-    switch (activeType.value) {
-      case 'character':
-        success = await characterApi.update(item.id, item);
-        break;
-      case 'worldbook':
-        // 世界书需要单独处理条目
-        success = true;
-        break;
-      case 'preset':
-        success = await presetApi.update(item.id, item);
-        break;
-      case 'regex':
-        success = await regexApi.update(item.id, item);
-        break;
-    }
-
-    if (success) {
-      window.toastr?.success('保存成功');
-      emit('track-change', activeType.value, item.id);
-      closeEditor();
-      await refreshList();
-    } else {
-      window.toastr?.error('保存失败');
-    }
+    // 暂时只提示，后续实现编辑 API
+    window.toastr?.info('编辑功能开发中');
+    closeEditor();
   } catch (e) {
     console.error('[ST Manager] 保存失败:', e);
     window.toastr?.error('保存失败');
@@ -277,25 +231,8 @@ async function deleteItem(item: ResourceItem) {
 
   loading.value = true;
   try {
-    let success = false;
-    switch (activeType.value) {
-      case 'character':
-        success = await characterApi.delete(item.id);
-        break;
-      case 'regex':
-        success = await regexApi.delete(item.id);
-        break;
-      default:
-        window.toastr?.warning('该资源类型不支持删除');
-        return;
-    }
-
-    if (success) {
-      window.toastr?.success('删除成功');
-      await refreshList();
-    } else {
-      window.toastr?.error('删除失败');
-    }
+    // 暂时只提示，后续实现删除 API
+    window.toastr?.info('删除功能开发中');
   } catch (e) {
     console.error('[ST Manager] 删除失败:', e);
     window.toastr?.error('删除失败');

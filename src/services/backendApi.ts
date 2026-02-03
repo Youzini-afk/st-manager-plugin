@@ -82,6 +82,18 @@ class BackendService {
   // ============ 备份相关 API ============
 
   /**
+   * 获取资源统计
+   */
+  async getStats(): Promise<{
+    characters: number;
+    worldbooks: number;
+    presets: number;
+    regexScripts: number;
+  }> {
+    return this.request('/api/v2/stats');
+  }
+
+  /**
    * 触发手动备份
    */
   async triggerBackup(options?: BackupOptions): Promise<BackupResult> {

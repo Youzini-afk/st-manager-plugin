@@ -139,14 +139,15 @@ async function updateConfig(newConfig: Record<string, any>) {
  */
 async function refreshStats() {
   try {
-    // 从酒馆 API 获取资源数量
-    const ctx = window.SillyTavern?.getContext?.();
-    if (ctx) {
-      stats.characters = ctx.characters?.length || 0;
-    }
-
-    // 从后端获取备份信息
+    // 从后端获取资源统计
     if (isConnected.value) {
+      const backendStats = await backendService.getStats();
+      stats.characters = backendStats.characters;
+      stats.worldbooks = backendStats.worldbooks;
+      stats.presets = backendStats.presets;
+      stats.regexScripts = backendStats.regexScripts;
+      
+      // 获取备份信息
       const backups = await backendService.listBackups();
       stats.backups = backups.length;
       if (backups.length > 0) {
